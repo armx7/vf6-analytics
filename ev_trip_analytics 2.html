@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinFast VF6 EV Trip Analytics</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --accent-blue: #00f0ff;
+            --accent-green: #39ff14;
+            --text-main: #ffffff;
+            --text-muted: #8b949e;
+            --border-color: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden; /* Avoid horizontal scrolling entirely */
+            overflow-y: auto;   /* Natural vertical scrolling */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px; /* Perfect smartphone profile width constraint */
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1f293d, #161b22);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+        }
+
+        .header-title-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--accent-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* SVG VinFast Styled Logo */
+        .logo-v {
+            width: 32px;
+            height: 32px;
+            fill: none;
+            stroke: var(--text-main);
+            stroke-width: 3.5;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.6));
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+            font-weight: 700;
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        input {
+            background-color: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .btn-calc {
+            grid-column: span 2;
+            background: linear-gradient(90deg, #00f0ff, #0077ff);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-calc:active {
+            opacity: 0.9;
+        }
+
+        /* Essential Output Display Badges stacked cleanly */
+        .output-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .output-card {
+            background-color: #0d1117;
+            border-left: 4px solid var(--accent-green);
+            padding: 10px 12px;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .output-card.range-card {
+            border-left-color: var(--accent-blue);
+        }
+
+        .output-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .output-val {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-green);
+        }
+
+        .range-card .output-val {
+            color: var(--accent-blue);
+        }
+
+        .output-unit {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-left: 2px;
+            font-weight: normal;
+        }
+
+        /* Charging Matrix Table */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .matrix-table th {
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .matrix-table td {
+            padding: 10px 4px;
+            border-bottom: 1px solid #1f242c;
+            font-weight: 600;
+        }
+
+        .tier-name {
+            color: var(--text-main);
+        }
+
+        .time-val {
+            color: var(--accent-blue);
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .time-val.full {
+            color: #ffb703;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Realignment Header Component -->
+    <header>
+        <div class="header-title-container">
+            <div class="header-title">VF6 Analytics Engine</div>
+            <div class="header-subtitle">Trip & Charge Profiler</div>
+        </div>
+        <!-- Minimal Elegant Vector V Logo -->
+        <svg class="logo-v" viewBox="0 0 40 40">
+            <path d="M8 10 L20 32 L32 10" />
+            <path d="M13 10 L20 25 L27 10" stroke-width="2" opacity="0.7" />
+        </svg>
+    </header>
+
+    <!-- Trip Inputs Container -->
+    <div class="panel">
+        <div class="panel-title">Trip Parameters</div>
+        <div class="grid-2">
+            <div class="input-group">
+                <label for="capacity">Battery Cap. (kWh)</label>
+                <input type="number" id="capacity" value="59.9" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="distance">Distance Run (km)</label>
+                <input type="number" id="distance" value="73" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="startSoc">Start SOC (%)</label>
+                <input type="number" id="startSoc" value="81" min="0" max="100">
+            </div>
+            <div class="input-group">
+                <label for="currentSoc">Current SOC (%)</label>
+                <input type="number" id="currentSoc" value="54" min="0" max="100">
+            </div>
+            <button class="btn-calc" onclick="calculateMetrics()">Calculate Analytics</button>
+        </div>
+    </div>
+
+    <!-- Prioritized KPI Primary Output Component -->
+    <div class="panel">
+        <div class="panel-title">Performance Metrics</div>
+        <div class="output-row">
+            
+            <div class="output-card">
+                <div class="output-meta">
+                    <span class="output-label">EFFICIENCY</span>
+                    <span class="output-sublabel" style="font-size:10px; color:var(--text-muted);">Distance per Unit Energy</span>
+                </div>
+                <div class="output-val" id="outEff">4.51<span class="output-unit">km/kWh</span></div>
+            </div>
+
+            <div class="output-card">
+                <div class="output-meta">
+                    <span class="output-label">CONSUMPTION</span>
+                    <span class="output-sublabel" style="font-size:10px; color:var(--text-muted);">Energy per 100km</span>
+                </div>
+                <div class="output-val" id="outCons">22.15<span class="output-unit">kWh/100km</span></div>
+            </div>
+
+            <div class="output-card range-card">
+                <div class="output-meta">
+                    <span class="output-label">ESTIMATED REMAINING RANGE</span>
+                    <span class="output-sublabel" style="font-size:10px; color:var(--text-muted);">On Current Charge</span>
+                </div>
+                <div class="output-val" id="outRemRange">146.00<span class="output-unit">km</span></div>
+            </div>
+
+            <div class="output-card range-card" style="border-left-style: dashed; opacity: 0.85;">
+                <div class="output-meta">
+                    <span class="output-label">PROJECTED TOTAL RANGE</span>
+                    <span class="output-sublabel" style="font-size:10px; color:var(--text-muted);">From 100% Full State</span>
+                </div>
+                <div class="output-val" id="outTotalRange">270.37<span class="output-unit">km</span></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Vertically Aligned Charger Tier Calculator Grid -->
+    <div class="panel">
+        <div class="panel-title">Charging Matrix (Estimates)</div>
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>Charger Tier</th>
+                    <th>To 80%</th>
+                    <th>To 100% *</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="tier-name">3.1 kW AC <span style="font-size:10px; display:block; color:var(--text-muted);">Home Socket</span></td>
+                    <td class="time-val" id="c31_80">5h 02m</td>
+                    <td class="time-val full" id="c31_100">8h 54m</td>
+                </tr>
+                <tr>
+                    <td class="tier-name">7.2 kW AC <span style="font-size:10px; display:block; color:var(--text-muted);">Wallbox Terminal</span></td>
+                    <td class="time-val" id="c72_80">2h 10m</td>
+                    <td class="time-val full" id="c72_100">3h 49m</td>
+                </tr>
+                <tr>
+                    <td class="tier-name">60 kW DC <span style="font-size:10px; display:block; color:var(--text-muted);">Fast Charger</span></td>
+                    <td class="time-val" id="c60_80">16m</td>
+                    <td class="time-val full" id="c60_100">1h 04m</td>
+                </tr>
+                <tr>
+                    <td class="tier-name">100 kW DC <span style="font-size:10px; display:block; color:var(--text-muted);">Ultra Fast</span></td>
+                    <td class="time-val" id="c100_80">10m</td>
+                    <td class="time-val full" id="c100_100">58m</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 10px; line-height: 1.3;">
+            * Note: For the VinFast VF6, calculations dynamically apply a heavy throttling thermal curve profile down to ~15 kW after passing 80% SOC to preserve battery lifespan.
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function formatTime(totalHours) {
+        if (totalHours <= 0) return "0m";
+        const h = Math.floor(totalHours);
+        const m = Math.round((totalHours - h) * 60);
+        if (h === 0) return `${m}m`;
+        return `${h}h ${m < 10 ? '0' : ''}${m}m`;
+    }
+
+    function calculateMetrics() {
+        // Read Core Parameters
+        const N = parseFloat(document.getElementById('capacity').value) || 59.9;
+        const X = parseFloat(document.getElementById('distance').value) || 73;
+        const startSoc = parseFloat(document.getElementById('startSoc').value) || 81;
+        const currentSoc = parseFloat(document.getElementById('currentSoc').value) || 54;
+
+        // Base Usage Math
+        const Y = startSoc - currentSoc;
+        if (Y <= 0 || X <= 0 || N <= 0) {
+            alert("Please verify inputs. Percentage drop and total distance must be greater than zero.");
+            return;
+        }
+
+        const energyUsed = (Y / 100) * N;
+
+        // Core EV Metrics
+        const efficiency = X / energyUsed; 
+        const consumption = (Y * N) / X; 
+        const totalRange = (X / Y) * 100;
+        const remainingRange = totalRange * (currentSoc / 100);
+
+        // Update UI Dashboard Badges
+        document.getElementById('outEff').innerHTML = `${efficiency.toFixed(2)}<span class="output-unit">km/kWh</span>`;
+        document.getElementById('outCons').innerHTML = `${consumption.toFixed(2)}<span class="output-unit">kWh/100km</span>`;
+        document.getElementById('outRemRange').innerHTML = `${remainingRange.toFixed(2)}<span class="output-unit">km</span>`;
+        document.getElementById('outTotalRange').innerHTML = `${totalRange.toFixed(2)}<span class="output-unit">km</span>`;
+
+        // Calculate Energy targets needed to reach thresholds
+        const neededTo80 = Math.max(0, (80 - currentSoc) / 100) * N;
+        const needed80To100 = Math.max(0, (100 - Math.max(80, currentSoc)) / 100) * N;
+        const directlyTo100 = Math.max(0, (100 - currentSoc) / 100) * N;
+
+        // Efficiencies for conversion models
+        const acEff = 0.90; // 90% typical wallbox inverter metric
+        const dcEff = 0.95; // 95% line delivery thermal coefficient
+
+        // 1. Tier 3.1 kW AC
+        let t31_to80 = (neededTo80 / (3.1 * acEff));
+        let t31_total = (directlyTo100 / (3.1 * acEff));
+        document.getElementById('c31_80').innerText = formatTime(t31_to80);
+        document.getElementById('c31_100').innerText = formatTime(t31_total);
+
+        // 2. Tier 7.2 kW AC
+        let t72_to80 = (neededTo80 / (7.2 * acEff));
+        let t72_total = (directlyTo100 / (7.2 * acEff));
+        document.getElementById('c72_80').innerText = formatTime(t72_to80);
+        document.getElementById('c72_100').innerText = formatTime(t72_total);
+
+        // 3. Tier 60 kW DC
+        // To 80%: takes advantage of full speed step limit
+        let t60_to80 = (neededTo80 / (60 * dcEff));
+        // After 80%: throttle curve drops speed significantly to ~15kW
+        let t60_after80 = (needed80To100 / (15 * dcEff)); 
+        let t60_total = (currentSoc < 80) ? (t60_to80 + t60_after80) : (Math.max(0, (100 - currentSoc)/100)*N / (15 * dcEff));
+        document.getElementById('c60_80').innerText = formatTime(t60_to80);
+        document.getElementById('c60_100').innerText = formatTime(t60_total);
+
+        // 4. Tier 100 kW DC
+        // To 80%: utilizes 100kW station limit capabilities
+        let t100_to80 = (neededTo80 / (100 * dcEff));
+        // After 80%: identical protective thermal drop limit down to ~15kW
+        let t100_after80 = (needed80To100 / (15 * dcEff));
+        let t100_total = (currentSoc < 80) ? (t100_to80 + t100_after80) : (Math.max(0, (100 - currentSoc)/100)*N / (15 * dcEff));
+        document.getElementById('c100_80').innerText = formatTime(t100_to80);
+        document.getElementById('c100_100').innerText = formatTime(t100_total);
+    }
+</script>
+
+</body>
+</html>
